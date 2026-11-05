@@ -18,10 +18,12 @@ import re
 import shutil
 import subprocess
 import sys
+import tempfile
+import time
 import urllib.request
 from pathlib import Path
 
-VERSION_APP = "1.0.0"
+VERSION_APP = "1.1.0"
 FROZEN = bool(getattr(sys, "frozen", False))
 
 if FROZEN:
@@ -34,6 +36,7 @@ NOMBRE_YTDLP = "yt-dlp.exe" if os.name == "nt" else "yt-dlp"
 NOMBRE_FFMPEG = "ffmpeg.exe" if os.name == "nt" else "ffmpeg"
 YTDLP_LOCAL = BIN_DIR / NOMBRE_YTDLP
 FFMPEG_LOCAL = BIN_DIR / NOMBRE_FFMPEG
+FFPROBE_LOCAL = BIN_DIR / ("ffprobe.exe" if os.name == "nt" else "ffprobe")
 SALIDA_DEFECTO = (Path.home() / "Downloads" / "Descargador") if FROZEN else (BASE / "Descargas")
 
 
@@ -63,17 +66,21 @@ RELEASE_FILE = {
     "linux": "yt-dlp_linux",
 }
 
+SELECCION_MP4 = "bv*[vcodec^=avc1]+ba[acodec^=mp4a]/b[ext=mp4]/bv*+ba/b"
+
 CALIDADES = {
-    "mejor": ["-f", "bv*+ba/b"],
-    "1080": ["-f", "bv*+ba/b", "-S", "res:1080"],
-    "720": ["-f", "bv*+ba/b", "-S", "res:720"],
-    "480": ["-f", "bv*+ba/b", "-S", "res:480"],
+    "mejor": ["-f", SELECCION_MP4],
+    "1080": ["-f", SELECCION_MP4, "-S", "res:1080"],
+    "720": ["-f", SELECCION_MP4, "-S", "res:720"],
+    "480": ["-f", SELECCION_MP4, "-S", "res:480"],
     "audio": [
         "-f", "ba/b",
         "-x", "--audio-format", "mp3", "--audio-quality", "0",
         "--embed-thumbnail", "--embed-metadata",
     ],
 }
+
+GANANCIAS = [1.0, 1.5, 2.0, 3.0]
 
 NAVEGADORES = ["chrome", "edge", "firefox", "brave", "opera", "vivaldi", "chromium", "safari"]
 
@@ -227,6 +234,151 @@ def version_ffmpeg() -> str | None:
     return None
 
 
+def _herramienta(nombre: str) -> str | None:
+    exe = nombre + (".exe" if os.name == "nt" else "")
+    local = BIN_DIR / exe
+    if local.is_file():
+        return str(local)
+    return shutil.which(nombre)
+
+
+def _info_audio(archivo: Path) -> tuple[bool, str | None]:
+    """Devuelve (tiene audio, codec). Si no hay ffprobe asume que si."""
+    ffprobe = _herramienta("ffprobe")
+    if not ffprobe:
+        return True, None
+    try:
+        r = subprocess.run(
+            [ffprobe, "-v", "error", "-select_streams", "a:0",
+             "-show_entries", "stream=codec_name", "-of", "csv=p=0", str(archivo)],
+            capture_output=True, text=True, timeout=60, env=entorno(),
+            creationflags=CREATE_NO_WINDOW,
+        )
+        codec = r.stdout.strip().splitlines()[0].strip().lower() if r.stdout.strip() else None
+        return bool(codec), codec
+    except Exception:
+        return True, None
+
+
+def texto_ganancia(ganancia: float) -> str:
+    if ganancia <= 1.001:
+        return "normal"
+    return f"+{int(round((ganancia - 1.0) * 100))}%"
+
+
+def _filtro_ganancia(ganancia: float) -> str:
+    return f"volume={ganancia:.2f},alimiter=limit=0.95"
+
+
+def procesar_archivo(archivo: str | Path, ganancia: float = 1.0) -> tuple[Path, str]:
+    """
+    Deja el archivo en MP4 (video) y aplica ganancia al audio.
+    Si algo falla, conserva el archivo original y devuelve el motivo.
+    """
+    archivo = Path(archivo)
+    if not archivo.exists():
+        return archivo, "El archivo no existe."
+
+    try:
+        ganancia = max(1.0, min(float(ganancia or 1.0), 4.0))
+    except (TypeError, ValueError):
+        ganancia = 1.0
+
+    ffmpeg = _herramienta("ffmpeg")
+    if not ffmpeg:
+        return archivo, "ffmpeg no encontrado; se deja el original."
+
+    sufijo = archivo.suffix.lower()
+    solo_audio = sufijo in {".mp3", ".m4a", ".opus", ".flac", ".wav", ".aac", ".ogg"}
+    tiene_audio, codec = _info_audio(archivo)
+
+    if solo_audio:
+        if ganancia <= 1.001:
+            return archivo, "Audio sin cambios."
+        temporal = archivo.with_name(archivo.stem + ".descargador.tmp" + sufijo)
+        codecs = {
+            ".mp3": ["-c:a", "libmp3lame", "-b:a", "192k"],
+            ".m4a": ["-c:a", "aac", "-b:a", "192k"],
+            ".aac": ["-c:a", "aac", "-b:a", "192k"],
+            ".opus": ["-c:a", "libopus", "-b:a", "160k"],
+            ".ogg": ["-c:a", "libvorbis", "-q:a", "5"],
+            ".flac": ["-c:a", "flac"],
+            ".wav": ["-c:a", "pcm_s16le"],
+        }
+        comando = [
+            ffmpeg, "-y", "-hide_banner", "-loglevel", "error",
+            "-i", str(archivo), "-af", _filtro_ganancia(ganancia),
+            *codecs.get(sufijo, ["-c:a", "aac", "-b:a", "192k"]),
+            "-map_metadata", "0", str(temporal),
+        ]
+        r = subprocess.run(comando, capture_output=True, text=True, timeout=1800,
+                           env=entorno(), creationflags=CREATE_NO_WINDOW)
+        if r.returncode == 0:
+            os.replace(temporal, archivo)
+            return archivo, f"Ganancia {texto_ganancia(ganancia)} aplicada."
+        temporal.unlink(missing_ok=True)
+        return archivo, "No se pudo aplicar la ganancia: " + (r.stderr or "")[-300:]
+
+    # Video: si ya es MP4 con audio compatible y no hay ganancia, no se toca.
+    if sufijo == ".mp4" and ganancia <= 1.001 and (not tiene_audio or codec in ("aac", "mp3")):
+        return archivo, "MP4 ya compatible."
+
+    temporal = archivo.with_name(archivo.stem + ".descargador.tmp.mp4")
+    temporal.unlink(missing_ok=True)
+
+    def comando_video(copiar: bool) -> list[str]:
+        cmd = [
+            ffmpeg, "-y", "-hide_banner", "-loglevel", "error",
+            "-i", str(archivo), "-map", "0:v:0", "-map", "0:a:0?",
+        ]
+        cmd += ["-c:v", "copy"] if copiar else ["-c:v", "libx264", "-crf", "20", "-preset", "veryfast"]
+        if tiene_audio:
+            if ganancia > 1.001:
+                cmd += ["-af", _filtro_ganancia(ganancia)]
+            cmd += ["-c:a", "aac", "-b:a", "192k"]
+        else:
+            cmd += ["-an"]
+        cmd += ["-movflags", "+faststart", str(temporal)]
+        return cmd
+
+    r = subprocess.run(comando_video(True), capture_output=True, text=True, timeout=3600,
+                       env=entorno(), creationflags=CREATE_NO_WINDOW)
+    if r.returncode != 0:
+        r = subprocess.run(comando_video(False), capture_output=True, text=True, timeout=7200,
+                           env=entorno(), creationflags=CREATE_NO_WINDOW)
+    if r.returncode != 0:
+        temporal.unlink(missing_ok=True)
+        return archivo, "No se pudo convertir a MP4: " + (r.stderr or "")[-300:]
+
+    if sufijo == ".mp4":
+        os.replace(temporal, archivo)
+        final = archivo
+    else:
+        final = archivo.with_suffix(".mp4")
+        os.replace(temporal, final)
+        archivo.unlink(missing_ok=True)
+    mensaje = "Convertido a MP4."
+    if ganancia > 1.001:
+        mensaje += f" Audio {texto_ganancia(ganancia)}."
+    return final, mensaje
+
+
+def procesar_registro(registro: str | Path, ganancia: float = 1.0) -> list[tuple[Path, str]]:
+    ruta = Path(registro)
+    if not ruta.exists():
+        return []
+    vistos: list[str] = []
+    for linea in ruta.read_text(encoding="utf-8", errors="replace").splitlines():
+        linea = linea.strip()
+        if linea and linea not in vistos:
+            vistos.append(linea)
+    resultados = []
+    for archivo in vistos:
+        resultados.append(procesar_archivo(archivo, ganancia))
+    ruta.unlink(missing_ok=True)
+    return resultados
+
+
 def diagnostico() -> str:
     lineas = [
         f"Descargador Universal {VERSION_APP}",
@@ -257,6 +409,7 @@ def construir_comando(
     playlist: bool = False,
     subtitulos: bool = False,
     formatos: bool = False,
+    registro: str | Path | None = None,
 ) -> list[str]:
     """Arma la linea de comandos completa de yt-dlp."""
     cmd = ejecutable_ytdlp()
@@ -300,6 +453,9 @@ def construir_comando(
 
     cmd += ["--yes-playlist"] if playlist else ["--no-playlist"]
 
+    if registro:
+        cmd += ["--print-to-file", "after_move:filepath", str(registro)]
+
     if subtitulos:
         cmd += ["--write-subs", "--embed-subs", "--sub-langs", "es.*,en.*"]
 
@@ -324,14 +480,20 @@ def descargar(
     cookies: str | None = None,
     playlist: bool = False,
     subtitulos: bool = False,
+    ganancia: float = 1.0,
 ) -> int:
-    """Ejecuta la descarga y muestra el progreso en consola."""
+    """Ejecuta la descarga, deja MP4 y aplica ganancia si hace falta."""
     Path(salida).mkdir(parents=True, exist_ok=True)
-    cmd = construir_comando(urls, salida, calidad, cookies, playlist, subtitulos)
+    registro = Path(tempfile.gettempdir()) / f"descargador_{os.getpid()}_{int(time.time() * 1000)}.txt"
+    registro.unlink(missing_ok=True)
+    cmd = construir_comando(urls, salida, calidad, cookies, playlist, subtitulos, registro=registro)
     print("Ejecutando:", " ".join(cmd[:3]), "...")
     resultado = subprocess.run(cmd, env=entorno())
     if resultado.returncode == 0:
+        for final, mensaje in procesar_registro(registro, ganancia):
+            print(f"  {Path(final).name}: {mensaje}")
         print("\nListo. Archivos en:", Path(salida).resolve())
+    registro.unlink(missing_ok=True)
     return resultado.returncode
 
 
@@ -344,6 +506,7 @@ def main() -> int:
             "  python descargar.py https://youtu.be/XXXX\n"
             "  python descargar.py -c 1080 https://www.facebook.com/watch?v=XXXX\n"
             "  python descargar.py -c audio --cookies firefox https://x.com/usuario/status/XXXX\n"
+            "  python descargar.py -c 1080 --ganancia 2.0 https://youtu.be/XXXX\n"
             "  python descargar.py --lista https://www.youtube.com/playlist?list=XXXX\n"
             "\nMantenimiento:\n"
             "  python descargar.py --diagnostico\n"
@@ -357,6 +520,8 @@ def main() -> int:
                    help="Cookies de un navegador (" + ", ".join(NAVEGADORES) + ") o ruta a un cookies.txt")
     p.add_argument("--lista", action="store_true", help="Descargar la playlist completa")
     p.add_argument("--subtitulos", action="store_true", help="Descargar e incrustar subtitulos")
+    p.add_argument("--ganancia", type=float, choices=GANANCIAS, default=1.0,
+                   help="Subir el volumen del audio: 1.0 normal, 1.5 = +50%%, 2.0 = doble, 3.0 = +200%%")
     p.add_argument("--formatos", action="store_true", help="Solo listar los formatos disponibles")
     p.add_argument("--diagnostico", action="store_true", help="Mostrar versiones y rutas")
     p.add_argument("--actualizar", action="store_true", help="Actualizar yt-dlp a la ultima version")
@@ -386,7 +551,7 @@ def main() -> int:
 
     try:
         return descargar(args.urls, args.salida, args.calidad, args.cookies,
-                         args.lista, args.subtitulos)
+                         args.lista, args.subtitulos, args.ganancia)
     except KeyboardInterrupt:
         print("\nCancelado.")
         return 130

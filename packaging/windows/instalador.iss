@@ -1,5 +1,5 @@
 #define MyAppName "Descargador Universal"
-#define MyAppVersion "1.0.0"
+#define MyAppVersion "1.1.0"
 #define MyAppPublisher "Devue"
 #define MyAppExeName "Descargador.exe"
 
@@ -24,7 +24,7 @@ ArchitecturesAllowed=x64compatible
 ArchitecturesInstallIn64BitMode=x64compatible
 CloseApplications=yes
 RestartApplications=no
-VersionInfoVersion=1.0.0.0
+VersionInfoVersion=1.1.0.0
 VersionInfoCompany={#MyAppPublisher}
 VersionInfoDescription=Instalador de {#MyAppName}
 VersionInfoProductName={#MyAppName}

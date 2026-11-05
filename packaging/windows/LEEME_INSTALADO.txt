@@ -1,10 +1,16 @@
-DESCARGADOR UNIVERSAL 1.0.0
+DESCARGADOR UNIVERSAL 1.1.0
 ===========================
 
 1. Abre "Descargador Universal" desde el escritorio o el menu Inicio.
 2. Aparece una barra abajo a la derecha. Pega el enlace y pulsa Enter.
-3. El engranaje (o clic derecho) abre calidad, cookies, carpeta, playlist,
+3. El boton A+ sube el volumen: Normal, +50%, +100% o +200%.
+4. El engranaje (o clic derecho) abre calidad, cookies, carpeta, playlist,
    modo completo, inicio con Windows y las actualizaciones.
+
+FORMATO
+-------
+Los videos se guardan en MP4 (H.264/AAC cuando el sitio lo ofrece) para que
+se abran en cualquier reproductor. La ganancia se aplica sin distorsion.
 
 ACTUALIZACIONES
 ---------------

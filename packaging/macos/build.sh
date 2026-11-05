@@ -33,12 +33,12 @@ python -m PyInstaller --noconfirm --clean --windowed --name Descargador \
   Barra.pyw
 
 mkdir -p instaladores
-rm -f "instaladores/DescargadorUniversal-1.0.0-macOS.dmg"
+rm -f "instaladores/DescargadorUniversal-1.1.0-macOS.dmg"
 hdiutil create \
   -volname "Descargador Universal" \
   -srcfolder "dist/Descargador.app" \
   -ov -format UDZO \
-  "instaladores/DescargadorUniversal-1.0.0-macOS.dmg"
+  "instaladores/DescargadorUniversal-1.1.0-macOS.dmg"
 
-echo "Listo: instaladores/DescargadorUniversal-1.0.0-macOS.dmg"
+echo "Listo: instaladores/DescargadorUniversal-1.1.0-macOS.dmg"
 echo "Aviso: no esta firmado; en el Mac hay que abrirlo con clic derecho > Abrir."

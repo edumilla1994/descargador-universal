@@ -1,3 +1,8 @@
+import shutil
+import subprocess
+
+import pytest
+
 import descargar
 
 
@@ -20,6 +25,7 @@ def test_calidades():
     ):
         cmd = _cmd(calidad=calidad)
         assert "-f" in cmd
+        assert "avc1" in " ".join(cmd)
         if esperado.startswith("res"):
             assert esperado in cmd
     audio = _cmd(calidad="audio")
@@ -92,3 +98,23 @@ def test_sin_conexion(monkeypatch):
 
 def test_archivo_release():
     assert descargar.archivo_release() in {"yt-dlp.exe", "yt-dlp_linux", "yt-dlp_macos"}
+
+
+@pytest.mark.skipif(
+    not (descargar.FFMPEG_LOCAL.exists() or shutil.which("ffmpeg")),
+    reason="Sin ffmpeg",
+)
+def test_ganancia_audio(tmp_path):
+    origen = tmp_path / "tono.mp3"
+    ffmpeg = descargar._herramienta("ffmpeg")
+    subprocess.run(
+        [ffmpeg, "-y", "-hide_banner", "-loglevel", "error",
+         "-f", "lavfi", "-i", "sine=frequency=440:duration=1",
+         "-c:a", "libmp3lame", "-b:a", "128k", str(origen)],
+        check=True, capture_output=True,
+    )
+    final, mensaje = descargar.procesar_archivo(origen, 2.0)
+    assert final == origen
+    assert origen.exists()
+    assert origen.stat().st_size > 0
+    assert "Ganancia" in mensaje

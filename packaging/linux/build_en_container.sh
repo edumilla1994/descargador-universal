@@ -45,4 +45,4 @@ exec /opt/descargador/Descargador "$@"
 EOF
 chmod +x "$PAQUETE/usr/bin/descargador"
 
-dpkg-deb --build --root-owner-group "$PAQUETE" /salida/descargador_1.0.0_amd64.deb
+dpkg-deb --build --root-owner-group "$PAQUETE" /salida/descargador_1.1.0_amd64.deb

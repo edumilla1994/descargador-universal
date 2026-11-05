@@ -8,6 +8,8 @@ Barra flotante para **Windows, Ubuntu/Debian y macOS** que descarga video o audi
 
 - Barra mini de **480x48** pegada arriba de la barra de tareas. Pegas el enlace, pulsas Enter y descarga.
 - Elige calidad: mejor disponible, 1080p, 720p, 480p o solo audio MP3 con caratula.
+- **Siempre MP4**: al terminar remuxea o recodifica a MP4 con audio AAC para que se abra en cualquier reproductor.
+- **Boton A+**: sube el volumen del audio (+50%, +100% o +200%) con limitador para evitar distorsion.
 - Descarga playlists completas, subtitulos y usa cookies del navegador para sitios que piden sesion.
 - **Se actualiza solo**: comprueba yt-dlp una vez al dia y lo reemplaza sin tocar Python. Si una red cambia y bloquea las descargas, la actualizacion lo arregla.
 - Motor JavaScript **QuickJS incluido**: YouTube funciona aunque no tengas Node.js instalado.
@@ -18,7 +20,7 @@ Barra flotante para **Windows, Ubuntu/Debian y macOS** que descarga video o audi
 
 ### Windows
 
-1. Entra en [Releases](../../releases) y descarga `DescargadorUniversal_Setup_1.0.0.exe`.
+1. Entra en [Releases](../../releases) y descarga `DescargadorUniversal_Setup_1.1.0.exe`.
 2. Ejecutalo. Se instala en `%LOCALAPPDATA%\Programs\Descargador Universal` (por usuario, sin admin).
 3. Abre **Descargador Universal** desde el escritorio o el menu Inicio.
 
@@ -26,10 +28,10 @@ Barra flotante para **Windows, Ubuntu/Debian y macOS** que descarga video o audi
 
 ### Ubuntu / Debian
 
-Descarga `descargador_1.0.0_amd64.deb` desde [Releases](../../releases) y ejecuta:
+Descarga `descargador_1.1.0_amd64.deb` desde [Releases](../../releases) y ejecuta:
 
 ```bash
-sudo apt install ./descargador_1.0.0_amd64.deb
+sudo apt install ./descargador_1.1.0_amd64.deb
 descargador
 ```
 
@@ -44,13 +46,14 @@ No hay binario firmado ni notarizado. Para compilarlo en un Mac:
 bash packaging/macos/build.sh
 ```
 
-Genera `instaladores/DescargadorUniversal-1.0.0-macOS.dmg`. Como no esta firmado, al abrirlo hay que hacer **clic derecho > Abrir** la primera vez.
+Genera `instaladores/DescargadorUniversal-1.1.0-macOS.dmg`. Como no esta firmado, al abrirlo hay que hacer **clic derecho > Abrir** la primera vez.
 
 ## Uso
 
 1. Pega el enlace en la barra y pulsa **Enter** (o la flecha azul).
 2. La linea de abajo marca el progreso. Al terminar, el boton parpadea en verde.
-3. El **engranaje** o el **clic derecho** abren:
+3. El boton **A+** cambia el volumen: Normal, +50%, +100% o +200%. Se queda guardado.
+4. El **engranaje** o el **clic derecho** abren:
    - Calidad y cookies.
    - Carpeta de descargas.
    - Descargar playlist completa.
@@ -113,6 +116,7 @@ Ejecutar:
 python Barra.pyw          # barra mini
 python Descargar.pyw      # ventana completa (solo desde el codigo fuente)
 python descargar.py "https://youtu.be/XXXX"
+python descargar.py --ganancia 2.0 "https://youtu.be/XXXX"
 python descargar.py --diagnostico
 python descargar.py --actualizar
 ```
@@ -123,7 +127,7 @@ Tests:
 python -m pytest
 ```
 
-Los tests cubren la construccion de comandos, cookies, playlists, comparacion de versiones, QuickJS sin Node y un smoke test de la interfaz. El test de empaquetado se ejecuta solo si existe `dist/Descargador/Descargador.exe`.
+Los tests cubren la construccion de comandos, cookies, playlists, comparacion de versiones, QuickJS sin Node, MP4 con audio AAC, ganancia y un smoke test de la interfaz. El test de empaquetado se ejecuta solo si existe `dist/Descargador/Descargador.exe`.
 
 ### Compilar
 
@@ -150,7 +154,7 @@ bash packaging/macos/build.sh
 ```
 Barra.pyw                  barra mini (interfaz principal)
 Descargar.pyw              ventana completa con registro
-descargar.py               motor: comandos, descarga y actualizacion
+descargar.py               motor: comandos, descarga, MP4, ganancia y actualizacion
 assets/                    iconos ico, png, icns
 docs/                      capturas y checklist de pruebas
 packaging/windows/         instalador Inno Setup y script de build

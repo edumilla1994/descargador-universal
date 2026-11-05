@@ -17,6 +17,7 @@ import subprocess
 import sys
 import threading
 import time
+import tempfile
 from pathlib import Path
 
 import tkinter as tk
@@ -30,8 +31,8 @@ else:
 sys.path.insert(0, str(BASE))
 
 from descargar import (  # noqa: E402
-    SALIDA_DEFECTO, VERSION_APP, construir_comando, descargar_ytdlp, entorno,
-    hay_actualizacion, version_local_ytdlp,
+    GANANCIAS, SALIDA_DEFECTO, VERSION_APP, construir_comando, descargar_ytdlp, entorno,
+    hay_actualizacion, procesar_archivo, texto_ganancia, version_local_ytdlp,
 )
 
 ES_WINDOWS = os.name == "nt"
@@ -158,6 +159,7 @@ class Barra(tk.Tk):
         self.calidad = tk.StringVar(value=CALIDADES_UI[0][0])
         self.cookies = tk.StringVar(value=COOKIES_UI[0][0])
         self.playlist = tk.BooleanVar(value=False)
+        self.ganancia = tk.DoubleVar(value=1.0)
         self.completo_var = tk.BooleanVar(value=False)
         self.auto_var = tk.BooleanVar(value=True)
         self.inicio_var = tk.BooleanVar(value=False)
@@ -198,6 +200,13 @@ class Barra(tk.Tk):
         self.entrada.bind("<FocusIn>", self._quitar_placeholder)
         self.entrada.bind("<FocusOut>", self._poner_placeholder)
 
+        self.btn_audio = tk.Label(self.fila, text="A+", bg=FONDO, fg=GRIS,
+                                  font=_fuente(9, True), width=2, cursor="hand2")
+        self.btn_audio.pack(side="left", padx=(0, 2))
+        self.btn_audio.bind("<Button-1>", lambda _e: self._ciclar_ganancia())
+        self.btn_audio.bind("<Enter>", lambda _e: self.btn_audio.config(fg=TEXTO))
+        self.btn_audio.bind("<Leave>", lambda _e: self.btn_audio.config(fg=self._color_audio()))
+
         self.btn_config = tk.Label(self.fila, text="⚙", bg=FONDO, fg=GRIS,
                                    font=_fuente(12), width=3, cursor="hand2")
         self.btn_config.pack(side="left")
@@ -221,6 +230,7 @@ class Barra(tk.Tk):
         self.lienzo.bind("<B1-Motion>", self._mover)
 
         self._poner_placeholder()
+        self._pintar_audio()
 
     def _aplicar_estilo(self) -> None:
         if self.mini:
@@ -306,6 +316,12 @@ class Barra(tk.Tk):
             self.completo_var.set(not self.mini)
         if "playlist" in datos:
             self.playlist.set(bool(datos["playlist"]))
+        try:
+            valor = float(datos.get("ganancia", 1.0))
+            if valor in GANANCIAS:
+                self.ganancia.set(valor)
+        except (TypeError, ValueError):
+            pass
         self.inicio_var.set(self._en_inicio())
 
     def _guardar_config(self) -> None:
@@ -315,6 +331,7 @@ class Barra(tk.Tk):
             "cookies": dict(COOKIES_UI).get(self.cookies.get(), "ninguno"),
             "mini": self.mini,
             "playlist": bool(self.playlist.get()),
+            "ganancia": float(self.ganancia.get()),
         }
         try:
             CONFIG.parent.mkdir(parents=True, exist_ok=True)
@@ -369,6 +386,50 @@ class Barra(tk.Tk):
         self._ph_texto = PLACEHOLDER
         self.entrada.delete(0, "end")
         self._poner_placeholder()
+
+    def _color_audio(self) -> str:
+        try:
+            return AZUL if float(self.ganancia.get()) > 1.001 else GRIS
+        except (TypeError, ValueError):
+            return GRIS
+
+    def _pintar_audio(self) -> None:
+        try:
+            self.btn_audio.config(fg=self._color_audio())
+        except tk.TclError:
+            pass
+
+    def _ciclar_ganancia(self) -> None:
+        actual = float(self.ganancia.get())
+        try:
+            indice = (GANANCIAS.index(actual) + 1) % len(GANANCIAS)
+        except ValueError:
+            indice = 0
+        self.ganancia.set(GANANCIAS[indice])
+        self._al_cambiar_ganancia()
+        self._aviso(f"Volumen {texto_ganancia(GANANCIAS[indice])}")
+
+    def _al_cambiar_ganancia(self) -> None:
+        self._guardar_config()
+        self._pintar_audio()
+
+    def _aviso(self, texto: str) -> None:
+        anterior = getattr(self, "_aviso_win", None)
+        if anterior is not None:
+            try:
+                anterior.destroy()
+            except tk.TclError:
+                pass
+        ven = tk.Toplevel(self)
+        ven.overrideredirect(True)
+        ven.attributes("-topmost", True)
+        tk.Label(ven, text=texto, bg=AZUL, fg="white", font=_fuente(9, True),
+                 padx=10, pady=5).pack()
+        x = max(0, self.btn_audio.winfo_rootx() - 30)
+        y = max(0, self.winfo_rooty() - 34)
+        ven.geometry(f"+{x}+{y}")
+        self._aviso_win = ven
+        ven.after(1600, ven.destroy)
 
     # ---------------- acciones ----------------
     def _elegir_carpeta(self) -> None:
@@ -459,6 +520,18 @@ class Barra(tk.Tk):
                                  command=self._guardar_config)
         self.menu.add_cascade(label="Cookies", menu=cook)
 
+        vol = tk.Menu(self.menu, tearoff=0, bg=FONDO, fg=TEXTO,
+                      activebackground=AZUL, activeforeground="white", font=_fuente(9))
+        for valor, etiqueta in (
+            (1.0, "Normal (sin cambios)"),
+            (1.5, "+50%"),
+            (2.0, "+100% (doble)"),
+            (3.0, "+200%"),
+        ):
+            vol.add_radiobutton(label=etiqueta, variable=self.ganancia, value=valor,
+                                command=self._al_cambiar_ganancia)
+        self.menu.add_cascade(label="Volumen del audio", menu=vol)
+
         self.menu.add_command(label="Carpeta de descargas...", command=self._elegir_carpeta)
         self.menu.add_checkbutton(label="Descargar playlist completa", variable=self.playlist,
                                   command=self._guardar_config)
@@ -477,10 +550,10 @@ class Barra(tk.Tk):
         self.menu.add_command(label="Pegar del portapapeles", command=self._pegar)
         self.menu.add_command(label="Salir", command=self._salir)
 
-        for widget in (self, self.caja, self.fila, self.lienzo, self.entrada, self.estado):
+        for widget in (self, self.caja, self.fila, self.lienzo, self.entrada, self.estado, self.btn_audio):
             widget.bind("<Button-3>", self._mostrar_menu)
         if ES_MAC:
-            for widget in (self, self.caja, self.fila, self.lienzo, self.entrada, self.estado):
+            for widget in (self, self.caja, self.fila, self.lienzo, self.entrada, self.estado, self.btn_audio):
                 widget.bind("<Button-2>", self._mostrar_menu)
 
         self._actualizar_etiqueta_version(version_local_ytdlp())
@@ -738,7 +811,11 @@ class Barra(tk.Tk):
         self._guardar_config()
         Path(salida).mkdir(parents=True, exist_ok=True)
 
-        cmd = construir_comando(urls, salida, calidad, cookies, self.playlist.get(), False)
+        ganancia = float(self.ganancia.get())
+        registro = Path(tempfile.gettempdir()) / f"descargador_{os.getpid()}_{int(time.time() * 1000)}.txt"
+        registro.unlink(missing_ok=True)
+        cmd = construir_comando(urls, salida, calidad, cookies, self.playlist.get(), False,
+                                registro=registro)
         self.ultimo_log = []
         self.cancelado = False
         self._progreso(0)
@@ -747,10 +824,23 @@ class Barra(tk.Tk):
         self.btn.config(text="×", bg=ROJO, activebackground="#dc2626")
         self.entrada.config(state="disabled")
 
-        self.hilo = threading.Thread(target=self._trabajar, args=(cmd,), daemon=True)
+        self.hilo = threading.Thread(target=self._trabajar, args=(cmd, ganancia, registro), daemon=True)
         self.hilo.start()
 
-    def _trabajar(self, cmd: list[str]) -> None:
+    def _ajustar_registro(self, registro: Path, ganancia: float) -> None:
+        if not registro.exists():
+            return
+        vistos: list[str] = []
+        for linea in registro.read_text(encoding="utf-8", errors="replace").splitlines():
+            ruta = linea.strip()
+            if ruta and ruta not in vistos:
+                vistos.append(ruta)
+        for ruta in vistos:
+            self.cola.put(("estado", f"Ajustando audio ({texto_ganancia(ganancia)})..."))
+            final, mensaje = procesar_archivo(ruta, ganancia)
+            self.cola.put(("log", f"{Path(final).name}: {mensaje}"))
+
+    def _trabajar(self, cmd: list[str], ganancia: float, registro: Path) -> None:
         try:
             self.proceso = subprocess.Popen(
                 cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True,
@@ -772,11 +862,17 @@ class Barra(tk.Tk):
                         texto += f" · {vel.group(1)}"
                     self.cola.put(("estado", texto))
             codigo = self.proceso.wait()
+            if codigo == 0:
+                try:
+                    self._ajustar_registro(registro, ganancia)
+                except Exception as exc:  # noqa: BLE001
+                    self.cola.put(("log", f"ERROR al ajustar el audio: {exc}"))
         except Exception as exc:  # noqa: BLE001
             self.cola.put(("log", f"ERROR: {exc}"))
             codigo = 1
         finally:
             self.proceso = None
+            registro.unlink(missing_ok=True)
         self.cola.put(("fin", codigo))
 
     def _cancelar(self) -> None:
@@ -925,34 +1021,49 @@ def _diagnostico() -> None:
 
 def _autotest() -> None:
     """Descarga de prueba sin abrir la interfaz. Escribe autotest.txt."""
-    import tempfile
-
-    from descargar import construir_comando, entorno
+    from descargar import construir_comando, entorno, procesar_registro
 
     indice = sys.argv.index("--autotest")
     url = sys.argv[indice + 1] if len(sys.argv) > indice + 1 else "https://www.youtube.com/watch?v=jNQXAC9IVRw"
+    ganancia = 1.0
+    if len(sys.argv) > indice + 2:
+        try:
+            ganancia = float(sys.argv[indice + 2])
+        except ValueError:
+            ganancia = 1.0
+
     salida = Path(tempfile.gettempdir()) / "DescargadorTest"
     salida.mkdir(parents=True, exist_ok=True)
     for archivo in salida.iterdir():
         if archivo.is_file():
             archivo.unlink()
 
-    comando = construir_comando([url], salida)
+    registro = Path(tempfile.gettempdir()) / f"autotest_{os.getpid()}.txt"
+    registro.unlink(missing_ok=True)
+    comando = construir_comando([url], salida, registro=registro)
     try:
         r = subprocess.run(
             comando, capture_output=True, text=True, encoding="utf-8", errors="replace",
-            env=entorno(), creationflags=CREATE_NO_WINDOW, timeout=300,
+            env=entorno(), creationflags=CREATE_NO_WINDOW, timeout=600,
         )
+        procesado = []
+        if r.returncode == 0:
+            for final, mensaje in procesar_registro(registro, ganancia):
+                procesado.append(f"{Path(final).name}: {mensaje}")
         archivos = sorted(f.name for f in salida.iterdir() if f.is_file())
         texto = (
             f"rc={r.returncode}\n"
             f"url={url}\n"
-            f"archivos={archivos}\n\n"
+            f"ganancia={ganancia}\n"
+            f"archivos={archivos}\n"
+            f"procesado={procesado}\n\n"
             f"STDOUT:\n{r.stdout[-4000:]}\n\n"
             f"STDERR:\n{r.stderr[-2000:]}\n"
         )
     except Exception as exc:  # noqa: BLE001
         texto = f"ERROR: {exc}\n"
+    finally:
+        registro.unlink(missing_ok=True)
     try:
         DIR_DATOS.mkdir(parents=True, exist_ok=True)
         (DIR_DATOS / "autotest.txt").write_text(texto, encoding="utf-8")

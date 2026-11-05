@@ -46,5 +46,11 @@ def test_barra_mini_y_completa(tmp_path, monkeypatch):
         app.update()
         assert app._aviso_update is not None
         app._aviso_update.destroy()
+
+        assert app.btn_audio.cget("text") == "A+"
+        app._aviso = lambda _texto: None
+        app._ciclar_ganancia()
+        assert app.ganancia.get() == 1.5
+        assert app.btn_audio.cget("fg") == modulo.AZUL
     finally:
         app.destroy()

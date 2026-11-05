@@ -13,7 +13,8 @@ Cubren:
 - Playlist y carpeta de salida.
 - Comparacion de versiones y deteccion de actualizaciones.
 - Motor JavaScript QuickJS cuando no hay Node ni Deno.
-- Smoke test de la barra: tamano mini/completo y aviso de actualizacion.
+- MP4 final con audio AAC y ganancia (prueba de audio).
+- Smoke test de la barra: tamano mini/completo, aviso de actualizacion y boton A+.
 - Diagnostico del ejecutable empaquetado (si existe `dist/Descargador/Descargador.exe`).
 
 ## Windows (probado)
@@ -27,15 +28,20 @@ Cubren:
 - [x] Descarga real de TikTok.
 - [x] Descarga real de X (Twitter).
 - [x] Audio MP3 con caratula.
+- [x] Video final en MP4 (H.264 + AAC) con ganancia +100%.
+- [x] Audio MP3 con ganancia +100% (volumedetect: +6 dB, sin clipping).
+- [x] Conversion de WebM/AV1 a MP4.
+- [x] Boton A+ cicla Normal, +50%, +100% y +200%, y se guarda.
 - [x] Desinstalacion limpia.
 - [x] Arranque de la barra y captura visual.
 
 ## Ubuntu 22.04 (probado)
 
 - [x] Build del `.deb` dentro de Docker.
-- [x] Instalacion con `apt install ./descargador_1.0.0_amd64.deb` (resuelve ffmpeg).
+- [x] Instalacion con `apt install ./descargador_1.1.0_amd64.deb` (resuelve ffmpeg).
 - [x] `Descargador --diagnostico` dentro del `.deb`.
 - [x] Descarga real de YouTube desde el `.deb` con QuickJS.
+- [x] MP4 final y ganancia +100% desde el `.deb` (sin Node).
 - [x] Arranque de la GUI con Xvfb durante 5 segundos sin errores.
 - [x] `.desktop`, icono y lanzador `/usr/bin/descargador` instalados.
 
