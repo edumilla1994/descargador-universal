@@ -61,6 +61,8 @@ Tiene lo mismo que la app: MP4 o MP3, calidad, ganancia A+, progreso y descarga 
 
 > La web local se ejecuta desde el repositorio y necesita Python 3.10 o superior. El instalador de Windows incluye solo la barra de escritorio.
 
+**GitHub no aloja la web ni ejecuta las descargas**: solo guarda el codigo. Cada persona la corre en su propia PC.
+
 - **Iniciar con Windows** deja el servidor activo al encender la PC.
 - Es solo para tu red Wi-Fi. Para un link publico hace falta un tunel con clave (Cloudflare Tunnel o Tailscale Funnel) o un VPS.
 - **Vercel no sirve para esto**: sus funciones no pueden ejecutar yt-dlp/ffmpeg, tienen limite de tiempo y de respuesta, y las IPs de datacenter estan bloqueadas por YouTube.
@@ -95,6 +97,78 @@ Para apagarlo: `tailscale funnel --https=443 off`.
 La URL cambia cada vez que reinicias el tunel.
 
 > Cloudflare necesita `cloudflared` en `bin/cloudflared.exe` (descarga oficial) y una clave de una linea en `web.clave`. La clave tambien se usa en el PC.
+
+## Como lo usa otra persona (cada uno en su PC)
+
+El link de Tailscale de una persona solo funciona mientras **su** PC esta encendida. Para que otra persona tenga su propia web:
+
+### 1. Descargar el proyecto
+
+```bash
+git clone https://github.com/edumilla1994/descargador-universal.git
+cd descargador-universal
+```
+
+O desde GitHub: **Code > Download ZIP** y descomprimir.
+
+### 2. Instalar Python y dependencias
+
+Requiere Python 3.10 o superior.
+
+```bash
+python -m pip install -r requirements.txt
+python scripts/instalar_dependencias.py
+```
+
+El segundo comando descarga yt-dlp y ffmpeg en Windows. En Linux/macOS instala ffmpeg con `sudo apt install ffmpeg` o `brew install ffmpeg`.
+
+### 3. Poner su propio usuario y clave
+
+Crear dos archivos de una linea en la carpeta del proyecto:
+
+- `web.usuario` con su usuario, por ejemplo `eduardo`
+- `web.clave` con una clave larga
+
+Tambien se puede pasar `--usuario` y `--clave` al ejecutar.
+
+### 4. Abrir la web
+
+```bash
+python web.py --lan --abrir
+```
+
+En Windows tambien sirve `Iniciar web.bat`.
+
+### 5. Link publico con su propia cuenta de Tailscale
+
+1. Descargar Tailscale desde <https://tailscale.com/download> e instalarlo.
+2. Iniciar sesion con Google, Microsoft, GitHub o email. La cuenta es gratis.
+3. En una terminal:
+
+   ```powershell
+   & "C:\Program Files\Tailscale\tailscale.exe" funnel --bg 8080
+   ```
+
+   En Linux/macOS:
+
+   ```bash
+   sudo tailscale funnel --bg 8080
+   ```
+
+4. La primera vez Tailscale puede pedir activar Funnel en el panel; seguir el enlace que muestra.
+5. Su link sera `https://<nombre-de-su-pc>.<su-tailnet>.ts.net`. Se consulta con:
+
+   ```bash
+   tailscale funnel status
+   ```
+
+**Cada persona necesita su propia cuenta de Tailscale.** No compartan la misma cuenta ni el link de otro: el link usa la PC y el internet de su dueno.
+
+> Si quieres que otra persona use **tu** instancia, pasale tu link y tu usuario/clave. Ten en cuenta que consumira tu PC y tu conexion. No publiques el link abiertamente.
+
+### Si solo quiere la app de escritorio
+
+Descarga el instalador desde [Releases](../../releases). No necesita Python, Tailscale ni configurar nada.
 
 ## Uso
 
@@ -209,6 +283,7 @@ web.py                     web local para PC y movil
 templates/                 HTML de la web
 static/                    CSS y JavaScript de la web
 Iniciar web.bat            lanzador de la web local
+Iniciar tunel.bat          link publico con Cloudflare
 assets/                    iconos ico, png, icns
 docs/                      capturas y checklist de pruebas
 packaging/windows/         instalador Inno Setup y script de build
@@ -225,6 +300,7 @@ tests/                     pruebas automaticas
 | Windows 11 (instalador, descarga YouTube/Facebook/TikTok/X) | Probado |
 | Ubuntu 22.04 (.deb, descarga YouTube, GUI con Xvfb) | Probado |
 | Web local (PC + movil, MP4, ganancia, QR) | Probado |
+| Tailscale Funnel (link fijo, usuario/clave) | Probado |
 | macOS | Script listo, sin probar (requiere un Mac) |
 
 Checklist manual completo en [docs/QA.md](docs/QA.md).
