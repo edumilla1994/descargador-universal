@@ -48,6 +48,7 @@ JOBS: dict[str, "Trabajo"] = {}
 LOCK = threading.Lock()
 INFO = {"lan": False, "ip": "127.0.0.1", "puerto": 8080}
 CLAVE: str | None = None
+USUARIO = "descargador"
 
 
 class Trabajo:
@@ -241,7 +242,10 @@ def _alternar_inicio() -> bool:
     if exe.lower().endswith("python.exe"):
         exe = exe[:-4] + "w.exe"
     clave = "".join(c for c in (CLAVE or "") if c.isalnum() or c in "-_")
-    extra = f" --clave {clave}" if clave else ""
+    usuario = "".join(c for c in (USUARIO or "") if c.isalnum() or c in "._-") or "descargador"
+    extra = f" --usuario {usuario}"
+    if clave:
+        extra += f" --clave {clave}"
     contenido = (
         'Set sh = CreateObject("WScript.Shell")\r\n'
         f'sh.Run """{exe}"" ""{BASE / "web.py"}"" --lan{extra}", 0, False\r\n'
@@ -263,7 +267,7 @@ def _auth():
     if not CLAVE:
         return None
     auth = request.authorization
-    if not auth or auth.username != "descargador" or auth.password != CLAVE:
+    if not auth or auth.username != USUARIO or auth.password != CLAVE:
         return Response("Acceso restringido", 401, {"WWW-Authenticate": 'Basic realm="Descargador"'})
     return None
 
@@ -395,16 +399,18 @@ def _limpiar() -> None:
 
 
 def main() -> None:
-    global CLAVE
+    global CLAVE, USUARIO
 
     p = argparse.ArgumentParser(description="Web local del Descargador Universal.")
     p.add_argument("--puerto", type=int, default=8080, help="Puerto (por defecto 8080)")
     p.add_argument("--lan", action="store_true", help="Permitir acceso desde el movil en la misma Wi-Fi")
     p.add_argument("--abrir", action="store_true", help="Abrir el navegador al iniciar")
-    p.add_argument("--clave", default=None, help="Pedir usuario 'descargador' y esta clave")
+    p.add_argument("--usuario", default="descargador", help="Usuario para la clave (por defecto descargador)")
+    p.add_argument("--clave", default=None, help="Pedir usuario y esta clave")
     args = p.parse_args()
 
     CLAVE = args.clave or None
+    USUARIO = (args.usuario or "descargador").strip()
 
     for existente in dict.fromkeys([args.puerto, _leer_puerto()]):
         if existente and _es_nuestro(existente):
@@ -437,7 +443,7 @@ def main() -> None:
     else:
         print(f"Abre: http://127.0.0.1:{puerto}")
     if CLAVE:
-        print("Acceso protegido con clave (usuario: descargador).")
+        print(f"Acceso protegido (usuario: {USUARIO}).")
     print("Cierra esta ventana para detener el servidor.")
 
     threading.Thread(target=_limpiar, daemon=True).start()

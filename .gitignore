@@ -28,6 +28,7 @@ autotest.txt
 web.log
 web.puerto
 web.clave
+web.usuario
 tunel.log
 cloudflared.log
 actualizacion.log

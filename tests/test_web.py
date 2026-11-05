@@ -75,3 +75,13 @@ def test_clave_basica(cliente, monkeypatch):
     credencial = base64.b64encode(b"descargador:secreta").decode()
     r = cliente.get("/api/info", headers={"Authorization": f"Basic {credencial}"})
     assert r.status_code == 200
+
+
+def test_usuario_personalizado(cliente, monkeypatch):
+    monkeypatch.setattr(web, "CLAVE", "secreta")
+    monkeypatch.setattr(web, "USUARIO", "eduardo")
+    buena = base64.b64encode(b"eduardo:secreta").decode()
+    r = cliente.get("/api/info", headers={"Authorization": f"Basic {buena}"})
+    assert r.status_code == 200
+    mala = base64.b64encode(b"descargador:secreta").decode()
+    assert cliente.get("/api/info", headers={"Authorization": f"Basic {mala}"}).status_code == 401

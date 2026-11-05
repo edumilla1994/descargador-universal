@@ -71,15 +71,30 @@ Tiene lo mismo que la app: MP4 o MP3, calidad, ganancia A+, progreso y descarga 
 
 ### Link publico (opcional)
 
-Para abrirla desde fuera de tu Wi-Fi, usa el tunel de Cloudflare:
+**Tailscale Funnel (link fijo, recomendado)**
+
+1. Instala Tailscale y inicia sesion en la PC.
+2. Ejecuta:
+
+   ```bash
+   tailscale funnel --bg 8080
+   ```
+
+3. La URL fija es `https://<maquina>.<tu-tailnet>.ts.net`.
+4. La web pide el usuario y la clave configurados en `web.usuario` y `web.clave`.
+
+La URL no cambia mientras no cambies el nombre de la maquina o el tailnet. Requiere la PC encendida.
+Para apagarlo: `tailscale funnel --https=443 off`.
+
+**Cloudflare Tunnel (link temporal)**
 
 1. Ejecuta `Iniciar tunel.bat` (o el acceso directo **Tunel Cloudflare**).
 2. Copia la URL `https://....trycloudflare.com` que aparece en la consola.
-3. La web pedira usuario `descargador` y la clave guardada en `web.clave`.
+3. La web pide el usuario y la clave configurados (por defecto `descargador`, se cambia con `--usuario` y `web.clave`).
 
-La URL cambia cada vez que reinicias el tunel. Para una URL fija hace falta un dominio propio con un tunel con nombre, o Tailscale Funnel.
+La URL cambia cada vez que reinicias el tunel.
 
-> El tunel necesita `cloudflared` en `bin/cloudflared.exe` (descarga oficial de Cloudflare) y una clave de una linea en `web.clave`. La clave tambien se usa en el PC.
+> Cloudflare necesita `cloudflared` en `bin/cloudflared.exe` (descarga oficial) y una clave de una linea en `web.clave`. La clave tambien se usa en el PC.
 
 ## Uso
 
@@ -153,6 +168,7 @@ python descargar.py --ganancia 2.0 "https://youtu.be/XXXX"
 python descargar.py --diagnostico
 python descargar.py --actualizar
 python web.py --lan --abrir   # web local para PC y movil
+python web.py --lan --usuario eduardo --clave "MiClave"  # con acceso propio
 ```
 
 Tests:

@@ -64,6 +64,14 @@ Cubren:
 - [x] Descarga real a traves del tunel: MP4 H.264/AAC.
 - [x] La URL cambia al reiniciar el tunel (documentado).
 
+## Tailscale Funnel (probado)
+
+- [x] Funnel activo en `https://<maquina>.<tailnet>.ts.net`.
+- [x] 401 sin clave y 200 con el usuario/clave configurados.
+- [x] Los controles locales quedan bloqueados desde el link publico.
+- [x] Descarga real a traves del link fijo: MP4 H.264/AAC.
+- [x] Cloudflare apagado; queda solo el link fijo.
+
 ## Pendiente
 
 - [ ] Probar el `.dmg` en un Mac real (el script de build esta listo).
