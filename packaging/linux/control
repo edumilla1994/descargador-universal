@@ -1,0 +1,9 @@
+Package: descargador
+Version: 1.0.0
+Section: utils
+Priority: optional
+Architecture: amd64
+Depends: ffmpeg, ca-certificates
+Maintainer: Devue
+Description: Descargador universal de video y audio
+ Barra flotante basada en yt-dlp para YouTube, Facebook, X, TikTok y mas.

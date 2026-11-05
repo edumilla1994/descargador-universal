@@ -1,0 +1,36 @@
+# Binarios y dependencias descargadas
+bin/
+*.exe
+*.dll
+*.pyd
+
+# Artefactos de compilacion
+build/
+dist/
+*.spec
+instaladores/
+*.deb
+*.dmg
+
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/
+venv/
+env/
+
+# Configuracion y descargas locales
+config_gui.json
+actualizaciones.json
+diagnostico.txt
+actualizacion.log
+Descargas/
+
+# Proyecto aparte (SaveHere) que vive en esta misma carpeta
+SaveHere/
+
+# Sistema
+.DS_Store
+Thumbs.db
+desktop.ini

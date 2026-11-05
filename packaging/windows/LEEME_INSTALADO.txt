@@ -1,0 +1,29 @@
+DESCARGADOR UNIVERSAL 1.0.0
+===========================
+
+1. Abre "Descargador Universal" desde el escritorio o el menu Inicio.
+2. Aparece una barra abajo a la derecha. Pega el enlace y pulsa Enter.
+3. El engranaje (o clic derecho) abre calidad, cookies, carpeta, playlist,
+   modo completo, inicio con Windows y las actualizaciones.
+
+ACTUALIZACIONES
+---------------
+yt-dlp se comprueba solo una vez al dia y se actualiza automaticamente.
+Si alguna red deja de funcionar, abre el menu del engranaje y pulsa
+"Buscar actualizaciones". Eso arregla casi siempre los bloqueos.
+
+CARPETAS
+--------
+Descargas:      %USERPROFILE%\Downloads\Descargador
+Configuracion:  %APPDATA%\Descargador
+Programa:       %LOCALAPPDATA%\Programs\Descargador Universal
+
+DESINSTALAR
+-----------
+Configuracion > Aplicaciones > Descargador Universal.
+Las descargas y la configuracion no se borran.
+
+LIMITES
+-------
+No descarga Netflix, Disney+, Prime Video ni Spotify (tienen DRM).
+Tampoco contenido privado de otras cuentas.

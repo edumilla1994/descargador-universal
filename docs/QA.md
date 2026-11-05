@@ -1,0 +1,48 @@
+# Checklist de pruebas
+
+## Automaticas
+
+```bash
+python -m pytest
+```
+
+Cubren:
+
+- Construccion de comandos para cada calidad.
+- Cookies de navegador y de archivo `cookies.txt`.
+- Playlist y carpeta de salida.
+- Comparacion de versiones y deteccion de actualizaciones.
+- Motor JavaScript QuickJS cuando no hay Node ni Deno.
+- Smoke test de la barra: tamano mini/completo y aviso de actualizacion.
+- Diagnostico del ejecutable empaquetado (si existe `dist/Descargador/Descargador.exe`).
+
+## Windows (probado)
+
+- [x] Compila el ejecutable con PyInstaller.
+- [x] Compila el instalador con Inno Setup.
+- [x] Instalacion silenciosa en carpeta limpia.
+- [x] `Descargador.exe --diagnostico` muestra `Empaquetado: True`, yt-dlp, ffmpeg y QuickJS.
+- [x] Descarga real de YouTube empaquetada **sin Node** en el PATH (usa QuickJS).
+- [x] Descarga real de Facebook Reel.
+- [x] Descarga real de TikTok.
+- [x] Descarga real de X (Twitter).
+- [x] Audio MP3 con caratula.
+- [x] Desinstalacion limpia.
+- [x] Arranque de la barra y captura visual.
+
+## Ubuntu 22.04 (probado)
+
+- [x] Build del `.deb` dentro de Docker.
+- [x] Instalacion con `apt install ./descargador_1.0.0_amd64.deb` (resuelve ffmpeg).
+- [x] `Descargador --diagnostico` dentro del `.deb`.
+- [x] Descarga real de YouTube desde el `.deb` con QuickJS.
+- [x] Arranque de la GUI con Xvfb durante 5 segundos sin errores.
+- [x] `.desktop`, icono y lanzador `/usr/bin/descargador` instalados.
+
+## Pendiente
+
+- [ ] Probar el `.dmg` en un Mac real (el script de build esta listo).
+- [ ] Probar en una maquina Windows sin Python instalado (el ejecutable es autocontenido, pero conviene verificarlo en una VM limpia).
+- [ ] Probar cookies reales de Firefox en Facebook/Instagram privados.
+- [ ] Verificar la actualizacion automatica cuando salga una version nueva de yt-dlp.
+- [ ] Revisar SmartScreen en la primera descarga del instalador.

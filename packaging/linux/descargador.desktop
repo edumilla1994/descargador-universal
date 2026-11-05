@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=Descargador Universal
+Comment=Descarga video y audio de YouTube, Facebook, X, TikTok y mas
+Exec=/opt/descargador/Descargador
+Icon=descargador
+Terminal=false
+Categories=Network;AudioVideo;
+StartupNotify=false
