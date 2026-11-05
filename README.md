@@ -79,6 +79,8 @@ Para abrirla desde fuera de tu Wi-Fi, usa el tunel de Cloudflare:
 
 La URL cambia cada vez que reinicias el tunel. Para una URL fija hace falta un dominio propio con un tunel con nombre, o Tailscale Funnel.
 
+> El tunel necesita `cloudflared` en `bin/cloudflared.exe` (descarga oficial de Cloudflare) y una clave de una linea en `web.clave`. La clave tambien se usa en el PC.
+
 ## Uso
 
 1. Pega el enlace en la barra y pulsa **Enter** (o la flecha azul).
