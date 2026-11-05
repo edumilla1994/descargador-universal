@@ -34,7 +34,7 @@ descargador
 ```
 
 Instala ffmpeg como dependencia. Si usas `dpkg -i`, completa con `sudo apt -f install`.
-El paquete esta probado en Ubuntu 22.04 y 24.04.
+El paquete esta probado en Ubuntu 22.04 (glibc 2.35, compatible con 24.04).
 
 ### macOS
 
