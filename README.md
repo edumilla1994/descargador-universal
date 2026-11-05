@@ -69,6 +69,16 @@ Tiene lo mismo que la app: MP4 o MP3, calidad, ganancia A+, progreso y descarga 
 
 ![Web en el movil](docs/captura-web-movil.png)
 
+### Link publico (opcional)
+
+Para abrirla desde fuera de tu Wi-Fi, usa el tunel de Cloudflare:
+
+1. Ejecuta `Iniciar tunel.bat` (o el acceso directo **Tunel Cloudflare**).
+2. Copia la URL `https://....trycloudflare.com` que aparece en la consola.
+3. La web pedira usuario `descargador` y la clave guardada en `web.clave`.
+
+La URL cambia cada vez que reinicias el tunel. Para una URL fija hace falta un dominio propio con un tunel con nombre, o Tailscale Funnel.
+
 ## Uso
 
 1. Pega el enlace en la barra y pulsa **Enter** (o la flecha azul).

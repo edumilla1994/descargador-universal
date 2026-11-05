@@ -56,6 +56,14 @@ Cubren:
 - [x] Proteccion con clave basica (401 sin clave, 200 con clave).
 - [x] Iniciar con Windows y detener servidor.
 
+## Tunel Cloudflare (probado)
+
+- [x] Link publico `https://....trycloudflare.com`.
+- [x] 401 sin clave y 200 con la clave correcta.
+- [x] Los controles de "Iniciar con Windows" y "Detener servidor" quedan bloqueados desde el tunel.
+- [x] Descarga real a traves del tunel: MP4 H.264/AAC.
+- [x] La URL cambia al reiniciar el tunel (documentado).
+
 ## Pendiente
 
 - [ ] Probar el `.dmg` en un Mac real (el script de build esta listo).

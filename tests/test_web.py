@@ -59,6 +59,16 @@ def test_acciones_locales_protegidas(cliente):
     assert cliente.post("/api/detener").status_code == 403
 
 
+def test_detras_de_tunel_no_es_local(cliente):
+    r = cliente.get("/api/info", headers={"CF-Connecting-IP": "203.0.113.5"})
+    assert r.status_code == 200
+    assert r.get_json()["local"] is False
+
+    headers = {"CF-Connecting-IP": "203.0.113.5", "X-Descargador": "1"}
+    assert cliente.post("/api/inicio", headers=headers).status_code == 403
+    assert cliente.post("/api/detener", headers=headers).status_code == 403
+
+
 def test_clave_basica(cliente, monkeypatch):
     monkeypatch.setattr(web, "CLAVE", "secreta")
     assert cliente.get("/api/info").status_code == 401

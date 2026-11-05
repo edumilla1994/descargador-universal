@@ -27,6 +27,9 @@ diagnostico.txt
 autotest.txt
 web.log
 web.puerto
+web.clave
+tunel.log
+cloudflared.log
 actualizacion.log
 Descargas/
 

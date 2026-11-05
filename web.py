@@ -172,6 +172,21 @@ def _ip_lan() -> str:
         s.close()
 
 
+def _ip_cliente() -> str:
+    """IP real, teniendo en cuenta el tunel de Cloudflare."""
+    cf = request.headers.get("CF-Connecting-IP")
+    if cf:
+        return cf.strip()
+    xff = request.headers.get("X-Forwarded-For")
+    if xff:
+        return xff.split(",")[0].strip()
+    return request.remote_addr or ""
+
+
+def _es_local() -> bool:
+    return _ip_cliente() in ("127.0.0.1", "::1")
+
+
 def _puerto_libre(preferido: int, host: str) -> int:
     for puerto in range(preferido, preferido + 20):
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
@@ -225,9 +240,11 @@ def _alternar_inicio() -> bool:
     exe = sys.executable
     if exe.lower().endswith("python.exe"):
         exe = exe[:-4] + "w.exe"
+    clave = "".join(c for c in (CLAVE or "") if c.isalnum() or c in "-_")
+    extra = f" --clave {clave}" if clave else ""
     contenido = (
         'Set sh = CreateObject("WScript.Shell")\r\n'
-        f'sh.Run """{exe}"" ""{BASE / "web.py"}"" --lan", 0, False\r\n'
+        f'sh.Run """{exe}"" ""{BASE / "web.py"}"" --lan{extra}", 0, False\r\n'
     )
     ruta.parent.mkdir(parents=True, exist_ok=True)
     ruta.write_text(contenido, encoding="utf-8")
@@ -258,7 +275,7 @@ def inicio():
 
 @app.get("/api/info")
 def api_info():
-    local = request.remote_addr in ("127.0.0.1", "::1")
+    local = _es_local()
     return jsonify(
         app="descargador",
         lan=bool(INFO["lan"]),
@@ -344,7 +361,7 @@ def api_qr():
 
 @app.post("/api/inicio")
 def api_inicio():
-    if request.remote_addr not in ("127.0.0.1", "::1"):
+    if not _es_local():
         return jsonify(error="Solo desde el PC."), 403
     if request.headers.get("X-Descargador") != "1":
         return jsonify(error="Peticion no valida."), 403
@@ -357,7 +374,7 @@ def api_inicio():
 
 @app.post("/api/detener")
 def api_detener():
-    if request.remote_addr not in ("127.0.0.1", "::1"):
+    if not _es_local():
         return jsonify(error="Solo desde el PC."), 403
     if request.headers.get("X-Descargador") != "1":
         return jsonify(error="Peticion no valida."), 403
