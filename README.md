@@ -13,6 +13,7 @@ Barra flotante para **Windows, Ubuntu/Debian y macOS** que descarga video o audi
 - Descarga playlists completas, subtitulos y usa cookies del navegador para sitios que piden sesion.
 - **Se actualiza solo**: comprueba yt-dlp una vez al dia y lo reemplaza sin tocar Python. Si una red cambia y bloquea las descargas, la actualizacion lo arregla.
 - Motor JavaScript **QuickJS incluido**: YouTube funciona aunque no tengas Node.js instalado.
+- **Web local**: la misma app en el navegador, con acceso desde el movil en la misma Wi-Fi y codigo QR.
 - Se adapta al tema claro u oscuro de Windows.
 - Todo se guarda en una carpeta del usuario; el instalador de Windows no pide administrador.
 
@@ -47,6 +48,26 @@ bash packaging/macos/build.sh
 ```
 
 Genera `instaladores/DescargadorUniversal-1.1.0-macOS.dmg`. Como no esta firmado, al abrirlo hay que hacer **clic derecho > Abrir** la primera vez.
+
+## Web local (PC + movil)
+
+La misma app en el navegador, sin instalar nada mas. Mientras la PC este encendida y el servidor este activo:
+
+1. Doble clic en **Descargador Web** (escritorio) o en `Iniciar web.bat`.
+2. En el PC: <http://localhost:8080>
+3. En el movil: misma Wi-Fi. La pagina muestra la direccion y un QR para escanear.
+
+Tiene lo mismo que la app: MP4 o MP3, calidad, ganancia A+, progreso y descarga directa. Los archivos se borran solos en 1 hora.
+
+> La web local se ejecuta desde el repositorio y necesita Python 3.10 o superior. El instalador de Windows incluye solo la barra de escritorio.
+
+- **Iniciar con Windows** deja el servidor activo al encender la PC.
+- Es solo para tu red Wi-Fi. Para un link publico hace falta un tunel con clave (Cloudflare Tunnel o Tailscale Funnel) o un VPS.
+- **Vercel no sirve para esto**: sus funciones no pueden ejecutar yt-dlp/ffmpeg, tienen limite de tiempo y de respuesta, y las IPs de datacenter estan bloqueadas por YouTube.
+
+![Web de escritorio](docs/captura-web.png)
+
+![Web en el movil](docs/captura-web-movil.png)
 
 ## Uso
 
@@ -119,6 +140,7 @@ python descargar.py "https://youtu.be/XXXX"
 python descargar.py --ganancia 2.0 "https://youtu.be/XXXX"
 python descargar.py --diagnostico
 python descargar.py --actualizar
+python web.py --lan --abrir   # web local para PC y movil
 ```
 
 Tests:
@@ -127,7 +149,7 @@ Tests:
 python -m pytest
 ```
 
-Los tests cubren la construccion de comandos, cookies, playlists, comparacion de versiones, QuickJS sin Node, MP4 con audio AAC, ganancia y un smoke test de la interfaz. El test de empaquetado se ejecuta solo si existe `dist/Descargador/Descargador.exe`.
+Los tests cubren la construccion de comandos, cookies, playlists, comparacion de versiones, QuickJS sin Node, MP4 con audio AAC, ganancia, la web local (rutas, QR y clave basica) y un smoke test de la interfaz. El test de empaquetado se ejecuta solo si existe `dist/Descargador/Descargador.exe`.
 
 ### Compilar
 
@@ -155,6 +177,10 @@ bash packaging/macos/build.sh
 Barra.pyw                  barra mini (interfaz principal)
 Descargar.pyw              ventana completa con registro
 descargar.py               motor: comandos, descarga, MP4, ganancia y actualizacion
+web.py                     web local para PC y movil
+templates/                 HTML de la web
+static/                    CSS y JavaScript de la web
+Iniciar web.bat            lanzador de la web local
 assets/                    iconos ico, png, icns
 docs/                      capturas y checklist de pruebas
 packaging/windows/         instalador Inno Setup y script de build
@@ -170,6 +196,7 @@ tests/                     pruebas automaticas
 |---|---|
 | Windows 11 (instalador, descarga YouTube/Facebook/TikTok/X) | Probado |
 | Ubuntu 22.04 (.deb, descarga YouTube, GUI con Xvfb) | Probado |
+| Web local (PC + movil, MP4, ganancia, QR) | Probado |
 | macOS | Script listo, sin probar (requiere un Mac) |
 
 Checklist manual completo en [docs/QA.md](docs/QA.md).

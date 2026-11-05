@@ -25,6 +25,8 @@ config_gui.json
 actualizaciones.json
 diagnostico.txt
 autotest.txt
+web.log
+web.puerto
 actualizacion.log
 Descargas/
 

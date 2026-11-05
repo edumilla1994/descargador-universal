@@ -14,6 +14,7 @@ Cubren:
 - Comparacion de versiones y deteccion de actualizaciones.
 - Motor JavaScript QuickJS cuando no hay Node ni Deno.
 - MP4 final con audio AAC y ganancia (prueba de audio).
+- Web local: portada, validacion de enlaces, QR, 404 y clave basica.
 - Smoke test de la barra: tamano mini/completo, aviso de actualizacion y boton A+.
 - Diagnostico del ejecutable empaquetado (si existe `dist/Descargador/Descargador.exe`).
 
@@ -44,6 +45,16 @@ Cubren:
 - [x] MP4 final y ganancia +100% desde el `.deb` (sin Node).
 - [x] Arranque de la GUI con Xvfb durante 5 segundos sin errores.
 - [x] `.desktop`, icono y lanzador `/usr/bin/descargador` instalados.
+
+## Web local (probado)
+
+- [x] Descarga real por la API: MP4 H.264/AAC con ganancia +100%.
+- [x] Progreso, conversion y enlace de descarga.
+- [x] Diseno responsive (escritorio 900px y movil 500px).
+- [x] URL de Wi-Fi y codigo QR.
+- [x] Acceso desde la IP LAN del PC.
+- [x] Proteccion con clave basica (401 sin clave, 200 con clave).
+- [x] Iniciar con Windows y detener servidor.
 
 ## Pendiente
 

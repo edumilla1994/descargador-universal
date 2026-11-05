@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#2563eb">
+  <title>Descargador Universal</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='estilo.css') }}">
+</head>
+<body>
+  <main class="tarjeta">
+    <header class="cabecera">
+      <div class="logo" aria-hidden="true">↓</div>
+      <div class="titulos">
+        <h1>Descargador Universal</h1>
+        <p>YouTube, Facebook, X, TikTok, Instagram y más</p>
+      </div>
+      <span id="chip" class="chip">Local</span>
+    </header>
+
+    <form id="formulario" novalidate>
+      <div class="grupo">
+        <label for="url">Enlace</label>
+        <div class="fila-url">
+          <input id="url" name="url" type="url" inputmode="url" autocomplete="off"
+                 autocapitalize="off" spellcheck="false" placeholder="https://..." required>
+          <button type="button" id="pegar" class="secundario">Pegar</button>
+        </div>
+      </div>
+
+      <div class="fila-opciones">
+        <div class="grupo">
+          <label for="calidad">Formato</label>
+          <select id="calidad">
+            <option value="mejor">Video MP4 (mejor)</option>
+            <option value="1080">Video MP4 1080p</option>
+            <option value="720">Video MP4 720p</option>
+            <option value="480">Video MP4 480p</option>
+            <option value="audio">Solo audio MP3</option>
+          </select>
+        </div>
+        <div class="grupo">
+          <label for="ganancia">Volumen</label>
+          <select id="ganancia">
+            <option value="1.0">Normal</option>
+            <option value="1.5">+50%</option>
+            <option value="2.0">+100%</option>
+            <option value="3.0">+200%</option>
+          </select>
+        </div>
+        <button id="descargar" type="submit" class="principal">Descargar</button>
+      </div>
+    </form>
+
+    <section id="progreso" class="panel oculto" aria-live="polite">
+      <div class="barra"><div id="relleno"></div></div>
+      <div class="linea-estado">
+        <span id="estado">Iniciando...</span>
+        <button id="cancelar" type="button" class="enlace">Cancelar</button>
+      </div>
+    </section>
+
+    <section id="resultado" class="panel oculto">
+      <p id="listo" class="ok"></p>
+      <div class="acciones">
+        <a id="enlace" class="principal" download>Descargar archivo</a>
+        <button id="nueva" type="button" class="secundario">Nueva descarga</button>
+      </div>
+    </section>
+
+    <p id="error" class="error oculto" role="alert"></p>
+
+    <footer>
+      <div id="movil" class="movil oculto">
+        <div>
+          <p class="etiqueta-pie">Desde tu móvil, en la misma Wi-Fi</p>
+          <code id="url-movil"></code>
+        </div>
+        <details>
+          <summary>Ver QR</summary>
+          <img id="qr" alt="Código QR para abrir en el móvil">
+        </details>
+      </div>
+
+      <p class="nota">Los archivos se borran solos en 1 hora. Descarga solo contenido que tengas derecho a usar.</p>
+
+      <div id="acciones-local" class="acciones-pie">
+        <label class="check"><input type="checkbox" id="inicio"> Iniciar con Windows</label>
+        <button id="detener" type="button" class="enlace">Detener servidor</button>
+      </div>
+
+      <p class="version">v{{ version }} · yt-dlp + ffmpeg</p>
+    </footer>
+  </main>
+
+  <script src="{{ url_for('static', filename='app.js') }}"></script>
+</body>
+</html>
